@@ -33,6 +33,10 @@ npm install
    PAYPAL_CLIENT_ID=your_sandbox_client_id
    PAYPAL_CLIENT_SECRET=your_sandbox_client_secret
    PORT=3000
+   # For Sandbox (default):
+   PAYPAL_API_BASE=https://api-m.sandbox.paypal.com
+   # For Live:
+   # PAYPAL_API_BASE=https://api-m.paypal.com
    ```
    *Note: Never commit your real `.env` file to version control.*
 

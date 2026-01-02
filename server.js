@@ -4,8 +4,8 @@ import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PORT = 3000 } = process.env;
-const base = "https://api-m.sandbox.paypal.com";
+const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PORT = 3000, PAYPAL_API_BASE } = process.env;
+const base = PAYPAL_API_BASE || "https://api-m.sandbox.paypal.com";
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -137,6 +137,12 @@ async function handleResponse(response) {
         throw new Error(errorMessage);
     }
 }
+
+app.get("/api/config", (req, res) => {
+    res.json({
+        clientId: process.env.PAYPAL_CLIENT_ID,
+    });
+});
 
 app.post("/api/orders", async (req, res) => {
     try {

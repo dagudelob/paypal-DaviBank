@@ -1,9 +1,4 @@
 
-// Check if the script is loaded with a dummy Client ID
-const script = document.querySelector('script[src*="client-id=test"]');
-if (script) {
-    console.warn("Using TEST Client ID. Please update index.html with your actual Sandbox Client ID from PayPal.");
-}
 
 const products = {};
 for (let i = 1; i <= 12; i++) {
@@ -48,98 +43,109 @@ function updateDisplay(productId) {
     }
 }
 
-window.paypal.Buttons({
-    style: {
-        shape: "rect",
-        layout: "vertical",
-        color: "gold",
-        label: "paypal",
-    },
-    async createOrder() {
-        try {
-            const response = await fetch("/api/orders", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                // use the "body" param to optionally pass additional order information
-                // like product ids and quantities
-                body: JSON.stringify({
-                    cart: [
-                        {
-                            id: productSelect ? productSelect.value : "1",
-                            quantity: "1",
-                        },
-                    ],
-                }),
-            });
+// Initialize PayPal SDK dynamically
+async function loadPayPalSDK() {
+    try {
+        const response = await fetch("/api/config");
+        const { clientId } = await response.json();
 
-            const orderData = await response.json();
+        if (!clientId) {
+            resultMessage("Error: PayPal Client ID not found in server config.", "error");
+            return;
+        }
 
-            if (orderData.id) {
-                return orderData.id;
-            } else {
+        const script = document.createElement("script");
+        // Ensure currency is USD for this demo
+        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD`;
+        script.onload = initializeButtons;
+        document.body.appendChild(script);
+    } catch (error) {
+        console.error("Failed to load PayPal SDK:", error);
+        resultMessage("Failed to load payment system.", "error");
+    }
+}
+
+function initializeButtons() {
+    window.paypal.Buttons({
+        style: {
+            shape: "rect",
+            layout: "vertical",
+            color: "gold",
+            label: "paypal",
+        },
+        async createOrder() {
+            try {
+                const response = await fetch("/api/orders", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        cart: [
+                            {
+                                id: productSelect ? productSelect.value : "1",
+                                quantity: "1",
+                            },
+                        ],
+                    }),
+                });
+
+                const orderData = await response.json();
+
+                if (orderData.id) {
+                    return orderData.id;
+                } else {
+                    const errorDetail = orderData?.details?.[0];
+                    const errorMessage = errorDetail
+                        ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
+                        : JSON.stringify(orderData);
+
+                    throw new Error(errorMessage);
+                }
+            } catch (error) {
+                console.error(error);
+                resultMessage(`Could not initiate PayPal Checkout...<br><br>${error}`, 'error');
+            }
+        },
+        async onApprove(data, actions) {
+            try {
+                const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const orderData = await response.json();
+
                 const errorDetail = orderData?.details?.[0];
-                const errorMessage = errorDetail
-                    ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
-                    : JSON.stringify(orderData);
 
-                throw new Error(errorMessage);
-            }
-        } catch (error) {
-            console.error(error);
-            resultMessage(`Could not initiate PayPal Checkout...<br><br>${error}`, 'error');
-        }
-    },
-    async onApprove(data, actions) {
-        try {
-            const response = await fetch(`/api/orders/${data.orderID}/capture`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const orderData = await response.json();
-            // Three cases to handle:
-            //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-            //   (2) Other non-recoverable errors -> Show a failure message
-            //   (3) Successful transaction -> Show confirmation or thank you message
-
-            const errorDetail = orderData?.details?.[0];
-
-            if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
-                // (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-                // recoverable state, per https://developer.paypal.com/docs/checkout/standard/customize/handle-funding-failures/
-                return actions.restart();
-            } else if (errorDetail) {
-                // (2) Other non-recoverable errors -> Show a failure message
-                throw new Error(`${errorDetail.description} (${orderData.debug_id})`);
-            } else if (!orderData.purchase_units) {
-                throw new Error(JSON.stringify(orderData));
-            } else {
-                // (3) Successful transaction -> Show confirmation or thank you message
-                // Or go to another URL:  actions.redirect('thank_you.html');
-                const transaction =
-                    orderData?.purchase_units?.[0]?.payments?.captures?.[0] ||
-                    orderData?.purchase_units?.[0]?.payments?.authorizations?.[0];
+                if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+                    return actions.restart();
+                } else if (errorDetail) {
+                    throw new Error(`${errorDetail.description} (${orderData.debug_id})`);
+                } else if (!orderData.purchase_units) {
+                    throw new Error(JSON.stringify(orderData));
+                } else {
+                    const transaction =
+                        orderData?.purchase_units?.[0]?.payments?.captures?.[0] ||
+                        orderData?.purchase_units?.[0]?.payments?.authorizations?.[0];
+                    resultMessage(
+                        `Transaction ${transaction.status}: ${transaction.id}<br>Value: $${transaction.amount.value} ${transaction.amount.currency_code}`, 'success'
+                    );
+                    console.log("Capture result", orderData);
+                }
+            } catch (error) {
+                console.error(error);
                 resultMessage(
-                    `Transaction ${transaction.status}: ${transaction.id}<br><br>See console for all available details`, 'success'
-                );
-                console.log(
-                    "Capture result",
-                    orderData,
-                    JSON.stringify(orderData, null, 2),
+                    `Sorry, your transaction could not be processed...<br><br>${error}`, 'error'
                 );
             }
-        } catch (error) {
-            console.error(error);
-            resultMessage(
-                `Sorry, your transaction could not be processed...<br><br>${error}`, 'error'
-            );
-        }
-    },
-}).render("#paypal-button-container");
+        },
+    }).render("#paypal-button-container");
+}
+
+loadPayPalSDK();
 
 // Example function to show a result to the user. Your site's UI library can be used instead.
 function resultMessage(message, type) {
