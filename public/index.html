@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Checkout | PayPal Integration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="overlay"></div>
+    <main class="checkout-container">
+        <div class="product-preview">
+            <div class="product-image">
+                <div class="image-placeholder">💎</div>
+            </div>
+            <div class="product-info">
+                <h1>Premium Membership</h1>
+                <p class="description">Unlock exclusive features and unlimited access.</p>
+                <div class="price-tag">
+                    <span class="currency">$</span>
+                    <span class="amount">100.00</span>
+                </div>
+                <div class="features">
+                    <div class="feature-item">
+                        <svg class="check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Instant Access</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg class="check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>24/7 Support</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-section">
+            <div class="payment-header">
+                <h2>Secure Checkout</h2>
+                <p>Complete your purchase securely with PayPal</p>
+            </div>
+            
+            <div id="paypal-button-container"></div>
+            
+            <div id="result-message" class="hidden"></div>
+            
+            <div class="trust-badges">
+                <span class="secure-icon">🔒 Secure 256-bit SSL Encrypted</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 
+        IMPORTANT: Replace "test" with your actual Client ID 
+        in the src URL arguments: &client-id=YOUR_CLIENT_ID
+    -->
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+    <script src="app.js"></script>
+</body>
+</html>

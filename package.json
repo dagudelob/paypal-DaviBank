@@ -1,0 +1,16 @@
+{
+  "name": "paypal-integration-demo",
+  "version": "1.0.0",
+  "description": "Simple PayPal API integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2"
+  },
+  "type": "module"
+}
