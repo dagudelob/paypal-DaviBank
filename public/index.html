@@ -32,6 +32,24 @@
                     </select>
                 </div>
 
+                <div id="custom-options"
+                    style="display: none; margin-bottom: 24px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="display:block; margin-bottom: 4px; font-size: 14px; color: #64748b;">Monthly
+                            Amount ($)</label>
+                        <input type="number" id="custom-amount" value="10.00" step="0.01" min="0.01"
+                            style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom: 4px; font-size: 14px; color: #64748b;">Billing Day
+                            of Month</label>
+                        <select id="billing-day"
+                            style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <!-- Filled by JS -->
+                        </select>
+                    </div>
+                </div>
+
                 <div class="price-tag">
                     <span class="currency">$</span>
                     <span id="amount-display" class="amount">100.00</span>

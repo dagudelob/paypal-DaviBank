@@ -138,11 +138,7 @@ async function handleResponse(response) {
     }
 }
 
-app.get("/api/config", (req, res) => {
-    res.json({
-        clientId: process.env.PAYPAL_CLIENT_ID,
-    });
-});
+
 
 app.post("/api/orders", async (req, res) => {
     try {
@@ -186,11 +182,119 @@ app.post("/api/orders/:orderID/capture", async (req, res) => {
     }
 });
 
+let subscriptionPlanId = "";
+
+const createProduct = async () => {
+    const accessToken = await generateAccessToken();
+    const url = `${base}/v1/catalogs/products`;
+    const payload = {
+        name: "Video Streaming Service",
+        description: "Video streaming service",
+        type: "SERVICE",
+        category: "SOFTWARE",
+        image_url: "https://example.com/streaming.jpg",
+        home_url: "https://example.com/home"
+    };
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "PayPal-Request-Id": Date.now().toString() // unique ID
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    return data.id;
+};
+
+const createPlan = async (productId, amount = "0.01") => {
+    const accessToken = await generateAccessToken();
+    const url = `${base}/v1/billing/plans`;
+    const payload = {
+        product_id: productId,
+        name: `Monthly Subscription $${amount}`,
+        description: `Monthly plan for ${amount}`,
+        status: "ACTIVE",
+        billing_cycles: [
+            {
+                frequency: {
+                    interval_unit: "MONTH",
+                    interval_count: 1
+                },
+                tenure_type: "REGULAR",
+                sequence: 1,
+                total_cycles: 0,
+                pricing_scheme: {
+                    fixed_price: {
+                        value: amount,
+                        currency_code: "USD"
+                    }
+                }
+            }
+        ],
+        payment_preferences: {
+            auto_bill_outstanding: true,
+            setup_fee: {
+                value: "0",
+                currency_code: "USD"
+            },
+            setup_fee_failure_action: "CONTINUE",
+            payment_failure_threshold: 3
+        }
+    };
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "PayPal-Request-Id": Date.now().toString()
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    console.log("Created Plan:", data);
+    return data.id;
+};
+
+app.post("/api/plans", async (req, res) => {
+    try {
+        const { product_id, amount } = req.body;
+        // Use the existing video service product if no product_id provided
+        const prodId = product_id || await createProduct(); // Reuse existing function to get/create
+
+        const planId = await createPlan(prodId, amount);
+        res.json({ id: planId });
+    } catch (error) {
+        console.error("Failed to create plan:", error);
+        res.status(500).json({ error: "Failed to create plan." });
+    }
+});
+
+app.get("/api/config", (req, res) => {
+    res.json({
+        clientId: process.env.PAYPAL_CLIENT_ID,
+        subscriptionPlanId: subscriptionPlanId
+    });
+});
+
 app.get("/", (req, res) => {
     res.sendFile(path.resolve(__dirname, "public/index.html"));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Node server listening at http://localhost:${PORT}/`);
     console.log(`Make sure to Create a .env file with PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET`);
+
+    try {
+        const prodId = await createProduct();
+        subscriptionPlanId = await createPlan(prodId);
+        console.log("✅ Subscription Plan Initialized:", subscriptionPlanId);
+    } catch (err) {
+        console.error("Failed to init subscription plan:", err);
+    }
 });

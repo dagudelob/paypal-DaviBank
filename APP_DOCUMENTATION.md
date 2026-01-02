@@ -81,3 +81,5 @@ The frontend is built with vanilla JavaScript and located in the `public/` direc
 - **server.js**: Main entry point. Handles API routes and PayPal logic (`generateAccessToken`, `createOrder`, `captureOrder`).
 - **public/**: Directory for static frontend assets (HTML, CSS, Client-side JS).
 - **package.json**: Manages dependencies and scripts.
+
+
