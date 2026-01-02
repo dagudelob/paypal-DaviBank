@@ -5,6 +5,49 @@ if (script) {
     console.warn("Using TEST Client ID. Please update index.html with your actual Sandbox Client ID from PayPal.");
 }
 
+const products = {};
+for (let i = 1; i <= 12; i++) {
+    const val = (i / 100).toFixed(2);
+    products[String(i)] = {
+        name: `Micro Payment Option ${i}`,
+        description: `Test transaction for $${val} USD`,
+        value: val
+    };
+}
+
+const productSelect = document.getElementById("product-select");
+const amountDisplay = document.getElementById("amount-display");
+const productName = document.getElementById("product-name");
+const productDesc = document.getElementById("product-desc");
+
+// Populate the select dropdown dynamically
+if (productSelect) {
+    productSelect.innerHTML = ""; // Clear existing options
+    Object.keys(products).forEach(id => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `${products[id].name} - $${products[id].value}`;
+        productSelect.appendChild(option);
+    });
+
+    // Initialize display with the first item
+    const firstId = Object.keys(products)[0];
+    updateDisplay(firstId);
+
+    productSelect.addEventListener("change", (e) => {
+        updateDisplay(e.target.value);
+    });
+}
+
+function updateDisplay(productId) {
+    const product = products[productId];
+    if (product) {
+        amountDisplay.textContent = product.value;
+        productName.textContent = product.name;
+        productDesc.textContent = product.description;
+    }
+}
+
 window.paypal.Buttons({
     style: {
         shape: "rect",
@@ -24,8 +67,8 @@ window.paypal.Buttons({
                 body: JSON.stringify({
                     cart: [
                         {
-                            id: "YOUR_PRODUCT_ID",
-                            quantity: "YOUR_PRODUCT_QUANTITY",
+                            id: productSelect ? productSelect.value : "1",
+                            quantity: "1",
                         },
                     ],
                 }),

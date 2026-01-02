@@ -38,10 +38,40 @@ const generateAccessToken = async () => {
     }
 };
 
+// Mock database of products
+// Generating 12 micro-payment options: 0.01 to 0.12 USD
+const products = {};
+for (let i = 1; i <= 12; i++) {
+    const val = (i / 100).toFixed(2);
+    products[String(i)] = {
+        id: String(i),
+        name: `Micro Payment $${val}`,
+        value: val,
+    };
+}
+
 // Create an order to start the transaction
 const createOrder = async (cart) => {
     // cart information passed from the frontend
     console.log("shopping cart information passed from the frontend createOrder() callback:", cart);
+
+    // Calculate the total amount on the server to prevent manipulation
+    let totalValue = "0.00";
+    if (cart && cart.length > 0) {
+        // Simple logic for this demo: sum up items from the mock database
+        let total = 0;
+        cart.forEach((item) => {
+            const product = products[item.id];
+            if (product) {
+                total += parseFloat(product.value) * parseInt(item.quantity);
+            }
+        });
+        totalValue = total.toFixed(2);
+    } else {
+        // Fallback for demo if cart is empty, or error out
+        console.log("Cart is empty or invalid, using default");
+        totalValue = "100.00";
+    }
 
     const accessToken = await generateAccessToken();
     const url = `${base}/v2/checkout/orders`;
@@ -51,7 +81,7 @@ const createOrder = async (cart) => {
             {
                 amount: {
                     currency_code: "USD",
-                    value: "100.00",
+                    value: totalValue,
                 },
             },
         ],
@@ -120,10 +150,29 @@ app.post("/api/orders", async (req, res) => {
     }
 });
 
+const transactions = [];
+
 app.post("/api/orders/:orderID/capture", async (req, res) => {
     try {
         const { orderID } = req.params;
         const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
+
+        // If payment is successful, save to our mock database
+        if (httpStatusCode === 200 || httpStatusCode === 201) {
+            const captureStatus = jsonResponse?.purchase_units?.[0]?.payments?.captures?.[0]?.status;
+            const captureId = jsonResponse?.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+
+            if (captureStatus === "COMPLETED") {
+                transactions.push({
+                    orderID,
+                    captureId,
+                    status: captureStatus,
+                    timestamp: new Date().toISOString()
+                });
+                console.log("✅ Payment Captured & Saved to DB:", transactions);
+            }
+        }
+
         res.status(httpStatusCode).json(jsonResponse);
     } catch (error) {
         console.error("Failed to create order:", error);

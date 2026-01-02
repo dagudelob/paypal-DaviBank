@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="overlay"></div>
     <main class="checkout-container">
@@ -17,12 +19,24 @@
                 <div class="image-placeholder">💎</div>
             </div>
             <div class="product-info">
-                <h1>Premium Membership</h1>
-                <p class="description">Unlock exclusive features and unlimited access.</p>
+                <h1 id="product-name">Premium Membership</h1>
+                <p id="product-desc" class="description">Unlock exclusive features and unlimited access.</p>
+
+                <div style="margin-bottom: 24px;">
+                    <label for="product-select"
+                        style="display:block; margin-bottom: 8px; font-size: 14px; color: #64748b;">Select Plan</label>
+                    <select id="product-select"
+                        style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 16px; color: #1e293b; background-color: #fff; cursor: pointer; transition: border-color 0.2s;">
+                        <option value="100">Premium Plan - $100.00</option>
+                        <option value="200">Basic Plan - $50.00</option>
+                    </select>
+                </div>
+
                 <div class="price-tag">
                     <span class="currency">$</span>
-                    <span class="amount">100.00</span>
+                    <span id="amount-display" class="amount">100.00</span>
                 </div>
+
                 <div class="features">
                     <div class="feature-item">
                         <svg class="check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -45,11 +59,11 @@
                 <h2>Secure Checkout</h2>
                 <p>Complete your purchase securely with PayPal</p>
             </div>
-            
+
             <div id="paypal-button-container"></div>
-            
+
             <div id="result-message" class="hidden"></div>
-            
+
             <div class="trust-badges">
                 <span class="secure-icon">🔒 Secure 256-bit SSL Encrypted</span>
             </div>
@@ -63,4 +77,5 @@
     <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
